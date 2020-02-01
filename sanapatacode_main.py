@@ -9,6 +9,103 @@ from sanapatacode_generation_schwasubstitution import *
 filename = "fullcodetest.txt"
 mode = "w"
 
+# properties of the writing system
+
+letternames = "s rh th ts n sh tsh p zh dzh t j m f dh d gh b w g ng ch v z dz c q l lj r h a á i e o u schwa schwo A I E U O"
+inputkeys = "s R T c n S C p J G t j m f D d H b w g N x v z Z k q l L r h a adieresis i e u o udieresis odieresis A I E U O"
+consonants = "s rh th ts n sh tsh p zh dzh t j m f dh gh d b w g ng ch v z dz c q l lj h r"
+vowels = "a á i e o u schwa schwo A I E U O"
+
+inputkeyToLetternameMap = {
+  "s" : "s",
+  "R" : "rh",
+  "T" : "th",
+  "c" : "ts",
+  "n" : "n",
+  "S" : "sh",
+  "C" : "tsh",
+  "p" : "p",
+  "J" : "zh",
+  "G" : "dzh",
+  "t" : "t",
+  "j" : "j",
+  "m" : "m",
+  "f" : "f",
+  "D" : "dh",
+  "d" : "d",
+  "H" : "gh",
+  "b" : "b",
+  "w" : "w",
+  "g" : "g"
+  "N" : "ng",
+  "x" : "ch",
+  "v" : "v",
+  "z" : "z",
+  "Z" : "dz",
+  "k" : "c",
+  "q" : "q",
+  "l" : "l",
+  "L" : "lj",
+  "r" : "r",
+  "h" : "h",
+  "a" : "a",
+  "adieresis": "á",
+  "i" : "i",
+  "e" : "e",
+  "u" : "u",
+  "o" : "o",
+  "udieresis": "schwa",
+  "odieresis": "schwo",
+  "A" : "A",
+  "I" : "I",
+  "E" : "E",
+  "U" : "U",
+  "O" : "O"
+}
+
+augmentables = [
+  "n", "sh", "tsh",
+  "t", "j",
+  "m", "f", "dh",
+  "d", "gh",
+  "b", "w",
+  "g", "ng", "ch",
+  "v", "z", "dz",
+  "l", "lj",
+  "r", "h"
+]
+
+nonaugmentables = [
+  "s", "rh", "th", "ts",
+  "p", "zh", "dzh",
+  "c", "q"
+]
+
+nonconnectings = [
+  "s", "rh", "th", "ts",
+  "p", "zh", "dzh",
+  "d", "gh",
+  "g", "ng", "ch",
+  "r", "h"
+]
+
+longVowels = [
+  "A", "I", "U", "E", "O"
+]
+
+shortVowels = [
+  "a", "i", "u", "e", "o"
+]
+
+positions = [
+  "isol", "init", "med", "fin",
+  "isol.gem", "init.gem", "med.gem", "fin.gem"
+]
+
+taConnectives = "t j b w m f dh".split(" ")
+afterTaSubs = "u o schwa schwo".split(" ")
+variants = ".schwa .schwo .gem .gem.schwa .gem.schwo"
+
 # lookup names
 
 inputToIsol = "Positional Substitution - Input to Isolated"
@@ -24,9 +121,22 @@ tableFinalToMedial = "Lookup Table - Final to Medial"
 tableInitToMedial = "Lookup Table - Initial to Medial"
 
 doubleToGeminate = "Replacement - Double Letter to Geminate"
+tableDoubleToGeminate = "Lookup Table - Double Letter to Geminate"
+
 longVowelToAugmented = "Replacement - Unaugmented to Augmented before Long Vowel"
 augmentableToSchwaAugmented = "Replacement - Augmentable to Schwa-Augmented"
 augmentableToSchwoAugmented = "Replacement - Augmentable to Schwo-Augmented"
+
+geminationSubstitutionContexts = [
+  "@Initials @Isolates",
+  "@Initials @Initials",
+  "@Medials @Isolates",
+  "@Medials @Initials",
+  "@Initials @Medials",
+  "@Medials @Medials",
+  "@Medials @Finals",
+  "@Initials @Finals"
+]
 
 ### main method ###
 
@@ -41,111 +151,93 @@ def run():
     createPositionClass(writer, "Medials", "med")
     createPositionClass(writer, "Finals", "fin")
 
-    createAugmentables(writer)
-    createSchwaAugmenteds(writer)
-    createNonconnectings(writer)
-    createNonaugmentables(writer)
-    createLongVowels(writer)
-    createShortVowels(writer)
+    createAugmentables(writer, augmentables, positions)
+    createSchwaAugmenteds(writer, augmentables, positions)
+    createNonconnectings(writer, augmentables, nonconnectings, positions)
+    createNonaugmentables(writer, nonaugmentables, positions)
+    createLongVowels(writer, longVowels, positions)
+    createShortVowels(writer, shortVowels, positions)
 
     writer.write("feature ContextualAlternates1 calt {\n")
     
-    writeSubstitutionRule(writer, inputToIsol)
-    writeSubstitutionRule(writer, isolToInit)
-    writeSubstitutionRule(writer, isolToFinal)
-    writeSubstitutionRule(writer, finalToMedial)
-    writeSubstitutionRule(writer, initToMedial)
+    # writeSubstitutionRule(writer, inputToIsol)
+    # writeSubstitutionRule(writer, isolToInit)
+    # writeSubstitutionRule(writer, isolToFinal)
+    # writeSubstitutionRule(writer, finalToMedial)
+    # writeSubstitutionRule(writer, initToMedial)
+    writeSubstitutionRule(writer, doubleToGeminate);
 
-    ### these are still a mess ###
+   ### these are still a mess ###
 
-    writer.write("\tlookup \"double letter to geminate lookup\";\n") 
-    writer.write("\tlookup \"Augmentable -> Schwa-augmented before Long Vowel\";\n")
-    writer.write("\tlookup \"schwa diacritic lookup\";\n")
-    writer.write("\tlookup \"schwo diacritic lookup\";\n")
-    writer.write("\tlookup \"change after nonconnecting\";\n")
-    writer.write("\tlookup \"long vowel to short vowel after schwa-augmented\";\n")
-    writer.write("\tlookup \"deadkey lookup\";\n")
-    writer.write("\tlookup AfterTaConnector;\n")
+    # writer.write("\tlookup \"Augmentable -> Schwa-augmented before Long Vowel\";\n")
+    # writer.write("\tlookup \"schwa diacritic lookup\";\n")
+    # writer.write("\tlookup \"schwo diacritic lookup\";\n")
+    # writer.write("\tlookup \"change after nonconnecting\";\n")
+    # writer.write("\tlookup \"long vowel to short vowel after schwa-augmented\";\n")
+    # writer.write("\tlookup \"deadkey lookup\";\n")
+    # writer.write("\tlookup AfterTaConnector;\n")
     writer.write("}\n\n")
 
-    ### positional sub rules - cleaned up, looking good ###
+    ### sub rules - cleaned up, looking good ###
 
-    writePositionalSubstitutions(writer)
+    #writePositionalSubstitutions(writer)
+    writeGeminationSubstitutions(writer)
     
     ### mess starts here again ###
 
-    writer.write("lookup \"change after nonconnecting\" {\n")
-    writer.write("\tcontext (@Nonconnecting) @Medials;\n")
-    writer.write("\tsub 0 \"sub after nonconnecting\";\n")
-    writer.write("\t context (@Nonconnecting) @Finals;\n")
-    writer.write("\tsub 0 \"sub after nonconnecting\";\n")
-    writer.write("}\n\n")
+    # writer.write("lookup \"change after nonconnecting\" {\n")
+    # writer.write("\tcontext (@Nonconnecting) @Medials;\n")
+    # writer.write("\tsub 0 \"sub after nonconnecting\";\n")
+    # writer.write("\t context (@Nonconnecting) @Finals;\n")
+    # writer.write("\tsub 0 \"sub after nonconnecting\";\n")
+    # writer.write("}\n\n")
 
-    writer.write("lookup \"sub after nonconnecting\" {\n")
-    writer.write("\tsub @Medials -> @Initials;\n")
-    writer.write("\tsub @Finals -> @IsolatedFinals;\n")
-    writer.write("}\n\n")
+    # writer.write("lookup \"sub after nonconnecting\" {\n")
+    # writer.write("\tsub @Medials -> @Initials;\n")
+    # writer.write("\tsub @Finals -> @IsolatedFinals;\n")
+    # writer.write("}\n\n")
 
-    writer.write("lookup \"double letter to geminate lookup\" {\n")
-    writer.write("\tcontext @Initials @Isolates;\n")
-    writer.write("\tsub 0 \"double letter to geminate letter\";\n")
-    writer.write("\tcontext @Initials @Initials;\n")
-    writer.write("\tsub 0 \"double letter to geminate letter\";\n")
-    writer.write("\tcontext @Medials @Isolates;\n")
-    writer.write("\tsub 0 \"double letter to geminate letter\";\n")
-    writer.write("\tcontext @Medials @Initials;\n")
-    writer.write("\tsub 0 \"double letter to geminate letter\";\n")
-    writer.write("\tcontext @Initials @Medials;\n")
-    writer.write("\tsub 0 \"double letter to geminate letter\";\n")
-    writer.write("\tcontext @Medials @Medials;\n")
-    writer.write("\tsub 0 \"double letter to geminate letter\";\n")
-    writer.write("\tcontext @Medials @Finals;\n")
-    writer.write("\tsub 0 \"double letter to geminate letter\";\n")
-    writer.write("\tcontext @Initials @Finals;\n")
-    writer.write("\tsub 0 \"double letter to geminate letter\";\n")
-    writer.write("}\n\n")
+    # writer.write("lookup \"double letter to geminate lookup\" {\n")
+    
 
-    writer.write("lookup \"Augmentable -> Schwa-augmented before Long Vowel\" {\n")
-    writer.write("\tcontext (@Augmentable) @LongVowels;\n")
-    writer.write("\tsub 0 \"Long Vowel -> Schwa + Short Vowel\";\n")
-    writer.write("}\n\n")
+    # writer.write("lookup \"Augmentable -> Schwa-augmented before Long Vowel\" {\n")
+    # writer.write("\tcontext (@Augmentable) @LongVowels;\n")
+    # writer.write("\tsub 0 \"Long Vowel -> Schwa + Short Vowel\";\n")
+    # writer.write("}\n\n")
 
-    writer.write("lookup \"schwa diacritic lookup\" {\n")
-    writer.write("\tcontext @Augmentable @Schwa;\n")
-    writer.write("\tsub 0 \"Augmentable to Schwa-Augmented\";\n")
-    writer.write("}\n\n")
+    # writer.write("lookup \"schwa diacritic lookup\" {\n")
+    # writer.write("\tcontext @Augmentable @Schwa;\n")
+    # writer.write("\tsub 0 \"Augmentable to Schwa-Augmented\";\n")
+    # writer.write("}\n\n")
 
-    writer.write("lookup \"schwo diacritic lookup\" {\n")
-    writer.write("\tcontext @Augmentable @Schwo;\n")
-    writer.write("\tsub 0 \"Augmentable to Schwo-Augmented\";\n")
-    writer.write("}\n\n")
+    # writer.write("lookup \"schwo diacritic lookup\" {\n")
+    # writer.write("\tcontext @Augmentable @Schwo;\n")
+    # writer.write("\tsub 0 \"Augmentable to Schwo-Augmented\";\n")
+    # writer.write("}\n\n")
 
-    writer.write("lookup \"long vowel to short vowel after schwa-augmented\" {\n")
-    writer.write("\tcontext (@SchwaAugmented) @LongVowels;\n")
-    writer.write("\tsub 0 \"Long Vowel to Short Vowel\";\n")
-    writer.write("}\n\n")
+    # writer.write("lookup \"long vowel to short vowel after schwa-augmented\" {\n")
+    # writer.write("\tcontext (@SchwaAugmented) @LongVowels;\n")
+    # writer.write("\tsub 0 \"Long Vowel to Short Vowel\";\n")
+    # writer.write("}\n\n")
 
-    writer.write("lookup \"Long Vowel to Short Vowel\" {\n")
-    writer.write("\tsub @LongVowels -> @ShortVowels;\n")
-    writer.write("}\n\n")
+    # writer.write("lookup \"Long Vowel to Short Vowel\" {\n")
+    # writer.write("\tsub @LongVowels -> @ShortVowels;\n")
+    # writer.write("}\n\n")
 
-    writer.write("lookup \"deadkey lookup\" {\n")
-    writer.write("\tcontext (numbersign) @Isolates (numbersign);\n")
-    writer.write("\tsub 0 \"Isolated to Medial\";\n")
-    writer.write("\tcontext (numbersign) @Isolates;\n")
-    writer.write("\tsub 0 \"Isolated to Final\";\n")
-    writer.write("\tcontext @Isolates (numbersign);\n")
-    writer.write("\tsub 0 \"Isolated to Initial\";\n")
-    writer.write("}\n\n")
+    # writer.write("lookup \"deadkey lookup\" {\n")
+    # writer.write("\tcontext (numbersign) @Isolates (numbersign);\n")
+    # writer.write("\tsub 0 \"Isolated to Medial\";\n")
+    # writer.write("\tcontext (numbersign) @Isolates;\n")
+    # writer.write("\tsub 0 \"Isolated to Final\";\n")
+    # writer.write("\tcontext @Isolates (numbersign);\n")
+    # writer.write("\tsub 0 \"Isolated to Initial\";\n")
+    # writer.write("}\n\n")
 
-    createGeminationSubstitutions(writer)
-    writer.write("\n")
+    # createSchwaOrSchwoSubstitutions(writer)
+    # writer.write("\n")
 
-    createSchwaOrSchwoSubstitutions(writer)
-    writer.write("\n")
-
-    createSchwaOrSchwoSubstitutions(writer, False)
-    writer.write("\n")
+    # createSchwaOrSchwoSubstitutions(writer, False)
+    # writer.write("\n")
 
 def writeSubstitutionRule(writer, name):
   writer.write("\tlookup \"" + name + "\";\n")
@@ -155,6 +247,17 @@ def writeLookupTableName(writer, name):
 
 def writeActualSubstitution(writer, name):
   writer.write("\tsub 0 \"" + name + "\";\n")
+
+def writeDiacriticSubstitutions(writer, subName, subTableName, contexts):
+  writeLookupTableName(writer, subName)
+  for context in contexts:
+    writer.write("\tcontext " + context + ";\n")
+    writeActualSubstitution(writer, subTableName)
+  writer.write("}\n\n")
+
+def writeGeminationSubstitutions(writer):
+  writeDiacriticSubstitutions(writer, doubleToGeminate, tableDoubleToGeminate, geminationSubstitutionContexts)
+  createGeminationSubstitutions(writer, tableDoubleToGeminate)
 
 def writePositionalSubstitutions(writer):
   writeLookupTableName(writer, inputToIsol)
@@ -194,5 +297,29 @@ def writePositionalSubstitutions(writer):
 
   createInitToMedialSubs(writer, tableInitToMedial)
 
+def createPositionClass(writer, className, qualifier, isInput = False):
+  lettersToProcess = ""
+
+  if isInput:
+    lettersToProcess = inputkeys.split(" ")
+  else:
+    lettersToProcess = consonants.split(" ")
+  
+  writer.write("class @" + className + " [")
+  if isInput:
+    for glyph in lettersToProcess:
+      writer.write(glyph + " ")
+  else:
+    for glyph in lettersToProcess:
+      qualifiedGlyph = glyph + "." + qualifier
+      forms = map(lambda x : qualifiedGlyph + x, [""] + variants.split(" "))
+      formsString = " ".join(forms)
+      writer.write(formsString)
+      writer.write(" ")
+    for glyph in vowels.split(" "):
+      qualifiedGlyph = glyph + "." + qualifier
+      writer.write(qualifiedGlyph)
+      writer.write(" ")
+  writer.write("];\n\n")
 
 run()

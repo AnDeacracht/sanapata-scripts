@@ -2,9 +2,9 @@ inputkeys = "s R T c n S C p J G t j m f D H d b w g N x v z Z k q l L h r a adi
 letternames = "s rh th ts n sh tsh p zh dzh t j m f dh gh d b w g ng ch v z dz c q l lj h r a á i e o u schwa schwo A I E U O".split(" ")
 consonants = "s rh th ts n sh tsh p zh dzh t j m f dh gh d b w g ng ch v z dz c q l lj h r".split(" ")
 
-def createSubs(writer, fromGlyph, toGlyph, lookupName, useZip = False):
+def createSubs(writer, fromGlyph, toGlyph, lookupName, mapInputKeys = False):
 		writer.write("lookup \"" + lookupName + "\" {\n\n")
-		if useZip:
+		if mapInputKeys:
 			mappings = zip(inputkeys, letternames)
 			for (inputkey, lettername) in mappings:
 				sub = "\tsub " + inputkey + " -> " + lettername + ".isol;\n"
@@ -12,14 +12,15 @@ def createSubs(writer, fromGlyph, toGlyph, lookupName, useZip = False):
 		else:
 			for glyph in letternames:
 				subBasic = "\tsub " + glyph + "." + fromGlyph + " -> " + glyph + "." + toGlyph + ";\n"
+				subGem = "\tsub " + glyph + "." + fromGlyph + ".gem -> " + glyph + "." + toGlyph + ".gem;\n"
 				writer.write(subBasic)
+				writer.write(subGem)
 				if glyph in consonants:
 					subGem = "\tsub " + glyph + "." + fromGlyph + ".gem -> " + glyph + "." + toGlyph + ".gem;\n"
 					subSchwa = "\tsub " + glyph + "." + fromGlyph + ".schwa -> " + glyph + "." + toGlyph + ".schwa;\n"
 					subSchwo = "\tsub " + glyph + "." + fromGlyph + ".schwo -> " + glyph + "." + toGlyph + ".schwo;\n"
 					subGemSchwa = "\tsub " + glyph + "." + fromGlyph + ".gem.schwa -> " + glyph + "." + toGlyph + ".gem.schwa;\n"
 					subGemSchwo = "\tsub " + glyph + "." + fromGlyph + ".gem.schwo -> " + glyph + "." + toGlyph + ".gem.schwo;\n"
-					writer.write(subGem)
 					writer.write(subSchwa)
 					writer.write(subSchwo)
 					writer.write(subGemSchwa)
