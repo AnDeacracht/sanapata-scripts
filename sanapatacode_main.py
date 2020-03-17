@@ -1,9 +1,8 @@
 # Generates the complete FontCreator OpenType code for the Osveraali script.
 
-from sanapatacode_generation import *
+from sanapatacode_generation_positionalsubs import *
 from sanapatacode_generation_36_variants import *
 from sanapatacode_generation_augmentables import *
-from sanapatacode_generation_classes import *
 from sanapatacode_generation_schwasubstitution import *
 
 filename = "fullcodetest.txt"
@@ -36,7 +35,7 @@ inputkeyToLetternameMap = {
   "H" : "gh",
   "b" : "b",
   "w" : "w",
-  "g" : "g"
+  "g" : "g",
   "N" : "ng",
   "x" : "ch",
   "v" : "v",
@@ -102,6 +101,10 @@ positions = [
   "isol.gem", "init.gem", "med.gem", "fin.gem"
 ]
 
+vowelPositions = [
+  "isol", "init", "med", "fin"
+]
+
 taConnectives = "t j b w m f dh".split(" ")
 afterTaSubs = "u o schwa schwo".split(" ")
 variants = ".schwa .schwo .gem .gem.schwa .gem.schwo"
@@ -119,13 +122,16 @@ tableIsolToInit = "Lookup Table - Isolated to Initial"
 tableIsolToFinal = "Lookup Table - Isolated to Final"
 tableFinalToMedial = "Lookup Table - Final to Medial"
 tableInitToMedial = "Lookup Table - Initial to Medial"
+tableConnToNonconn = "Lookup Table - Connecting to Nonconnecting"
 
 doubleToGeminate = "Replacement - Double Letter to Geminate"
 tableDoubleToGeminate = "Lookup Table - Double Letter to Geminate"
+connectingToNonconnecting = "Replacement - Connecting to Nonconnecting"
 
 longVowelToAugmented = "Replacement - Unaugmented to Augmented before Long Vowel"
 augmentableToSchwaAugmented = "Replacement - Augmentable to Schwa-Augmented"
 augmentableToSchwoAugmented = "Replacement - Augmentable to Schwo-Augmented"
+
 
 geminationSubstitutionContexts = [
   "@Initials @Isolates",
@@ -155,17 +161,18 @@ def run():
     createSchwaAugmenteds(writer, augmentables, positions)
     createNonconnectings(writer, augmentables, nonconnectings, positions)
     createNonaugmentables(writer, nonaugmentables, positions)
-    createLongVowels(writer, longVowels, positions)
-    createShortVowels(writer, shortVowels, positions)
+    createLongVowels(writer, longVowels, vowelPositions)
+    createShortVowels(writer, shortVowels, vowelPositions)
 
     writer.write("feature ContextualAlternates1 calt {\n")
     
-    # writeSubstitutionRule(writer, inputToIsol)
-    # writeSubstitutionRule(writer, isolToInit)
-    # writeSubstitutionRule(writer, isolToFinal)
-    # writeSubstitutionRule(writer, finalToMedial)
-    # writeSubstitutionRule(writer, initToMedial)
-    writeSubstitutionRule(writer, doubleToGeminate);
+    writeSubstitutionRule(writer, inputToIsol)
+    writeSubstitutionRule(writer, isolToInit)
+    writeSubstitutionRule(writer, isolToFinal)
+    writeSubstitutionRule(writer, finalToMedial)
+    writeSubstitutionRule(writer, initToMedial)
+    writeSubstitutionRule(writer, doubleToGeminate)
+    writeSubstitutionRule(writer, connectingToNonconnecting)
 
    ### these are still a mess ###
 
@@ -180,25 +187,26 @@ def run():
 
     ### sub rules - cleaned up, looking good ###
 
-    #writePositionalSubstitutions(writer)
+    writePositionalSubstitutions(writer)
     writeGeminationSubstitutions(writer)
     
-    ### mess starts here again ###
-
-    # writer.write("lookup \"change after nonconnecting\" {\n")
-    # writer.write("\tcontext (@Nonconnecting) @Medials;\n")
-    # writer.write("\tsub 0 \"sub after nonconnecting\";\n")
-    # writer.write("\t context (@Nonconnecting) @Finals;\n")
-    # writer.write("\tsub 0 \"sub after nonconnecting\";\n")
-    # writer.write("}\n\n")
-
-    # writer.write("lookup \"sub after nonconnecting\" {\n")
-    # writer.write("\tsub @Medials -> @Initials;\n")
-    # writer.write("\tsub @Finals -> @IsolatedFinals;\n")
-    # writer.write("}\n\n")
-
-    # writer.write("lookup \"double letter to geminate lookup\" {\n")
     
+
+    writer.write("lookup \"" + connectingToNonconnecting + "\" {\n")
+    writer.write("\tcontext (@Nonconnecting) @Medials;\n")
+    writer.write("\tsub 0 \"" + tableConnToNonconn + "\";\n")
+    writer.write("\t context (@Nonconnecting) @Finals;\n")
+    writer.write("\tsub 0 \"" + tableConnToNonconn + "\";\n")
+    writer.write("}\n\n")
+
+    # make this table explicit
+
+    writer.write("lookup \"" + tableConnToNonconn + "\" {\n")
+    writer.write("\tsub @Medials -> @Initials;\n")
+    writer.write("\tsub @Finals -> @Isolates;\n")
+    writer.write("}\n\n")
+
+    ### mess starts here again ###
 
     # writer.write("lookup \"Augmentable -> Schwa-augmented before Long Vowel\" {\n")
     # writer.write("\tcontext (@Augmentable) @LongVowels;\n")
@@ -257,7 +265,7 @@ def writeDiacriticSubstitutions(writer, subName, subTableName, contexts):
 
 def writeGeminationSubstitutions(writer):
   writeDiacriticSubstitutions(writer, doubleToGeminate, tableDoubleToGeminate, geminationSubstitutionContexts)
-  createGeminationSubstitutions(writer, tableDoubleToGeminate)
+  createGeminationSubstitutions(writer, tableDoubleToGeminate, consonants.split())
 
 def writePositionalSubstitutions(writer):
   writeLookupTableName(writer, inputToIsol)
@@ -275,23 +283,23 @@ def writePositionalSubstitutions(writer):
   createIsolToInitSubs(writer, tableIsolToInit)
 
   writeLookupTableName(writer, isolToFinal)
-  writer.write("\tcontext @Initials (@Isolates);\n")
+  writer.write("\tcontext (@Initials) @Isolates;\n")
   writeActualSubstitution(writer, tableIsolToFinal)
   writer.write("}\n\n")
 
   createIsolToFinalSubs(writer, tableIsolToFinal)
 
   writeLookupTableName(writer, finalToMedial)
-  writer.write("\tcontext @Medials (@Finals);\n")
+  writer.write("\tcontext (@Medials) @Finals;\n")
   writeActualSubstitution(writer, tableFinalToMedial)
   writer.write("}\n\n")
 
   createFinalToMedialSubs(writer, tableFinalToMedial)
 
   writeLookupTableName(writer, initToMedial)
-  writer.write("\tcontext @Initials (@Initials);\n")
+  writer.write("\tcontext (@Initials) @Initials;\n")
   writeActualSubstitution(writer, tableInitToMedial)
-  writer.write("\tcontext @Medials (@Initials);\n")
+  writer.write("\tcontext (@Medials) @Initials;\n")
   writeActualSubstitution(writer, tableInitToMedial)
   writer.write("}\n\n")
 

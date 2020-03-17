@@ -12,9 +12,9 @@ def createSubs(writer, fromGlyph, toGlyph, lookupName, mapInputKeys = False):
 		else:
 			for glyph in letternames:
 				subBasic = "\tsub " + glyph + "." + fromGlyph + " -> " + glyph + "." + toGlyph + ";\n"
-				subGem = "\tsub " + glyph + "." + fromGlyph + ".gem -> " + glyph + "." + toGlyph + ".gem;\n"
+				#subGem = "\tsub " + glyph + "." + fromGlyph + ".gem -> " + glyph + "." + toGlyph + ".gem;\n"
 				writer.write(subBasic)
-				writer.write(subGem)
+				#writer.write(subGem)
 				if glyph in consonants:
 					subGem = "\tsub " + glyph + "." + fromGlyph + ".gem -> " + glyph + "." + toGlyph + ".gem;\n"
 					subSchwa = "\tsub " + glyph + "." + fromGlyph + ".schwa -> " + glyph + "." + toGlyph + ".schwa;\n"
@@ -29,7 +29,7 @@ def createSubs(writer, fromGlyph, toGlyph, lookupName, mapInputKeys = False):
 		writer.write("\n}\n\n")	
 
 def createInputToIsolSubs(writer, name):
-	createSubs(writer, "", "", name, useZip = True)
+	createSubs(writer, "", "", name, mapInputKeys = True)
 
 def createIsolToInitSubs(writer, name):
 	createSubs(writer, "isol", "init", name)

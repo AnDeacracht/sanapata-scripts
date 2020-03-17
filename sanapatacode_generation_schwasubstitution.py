@@ -53,7 +53,7 @@ def createAfterTaSubstitutions(writer, description):
 		writer.write("\t" + "sub " + glyph + ".fin -> " + glyph + ".fin.afterta;\n")
 	writer.write("}\n")
 
-def createGeminationSubstitutions(writer, description):
+def createGeminationSubstitutions(writer, description, consonants):
 	writer.write("lookup \"" + description + "\" {\n")
 	for glyph in consonants:
 		for (firstQualifier, secondQualifier, substitutionQualifier) in substitutions:
