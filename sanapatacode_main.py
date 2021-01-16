@@ -1,5 +1,15 @@
 # Generates the complete FontCreator OpenType code for the Osveraali script.
 
+# TODOS:
+
+# - substitute schwa-augmented letter if schwa follows augmentable
+# - substitute schwo-augmented letter if schwo follows augmentable
+
+# - substitute schwa-augmented letter if long vowel follows augmentable
+
+# - substitute isolated letter for medial if ō is initial
+# - substitute isolated letter for medial if ū is initial
+
 from sanapatacode_generation_positionalsubs import *
 from sanapatacode_generation_36_variants import *
 from sanapatacode_generation_augmentables import *
@@ -126,14 +136,25 @@ tableConnToNonconn = "Lookup Table - Connecting to Nonconnecting"
 
 doubleToGeminate = "Replacement - Double Letter to Geminate"
 tableDoubleToGeminate = "Lookup Table - Double Letter to Geminate"
+
 connectingToNonconnecting = "Replacement - Connecting to Nonconnecting"
 
 longVowelToAugmented = "Replacement - Unaugmented to Augmented before Long Vowel"
+tableLongVowelToAugmented = "Lookup Table - Unaugmented to Augmented before Long Vowel"
+
 augmentableToSchwaAugmented = "Replacement - Augmentable to Schwa-Augmented"
+tableAugmentableToSchwaAugmented = "Lookup Table - Augmentable to Schwa-Augmented"
+
 augmentableToSchwoAugmented = "Replacement - Augmentable to Schwo-Augmented"
+tableAugmentableToSchwoAugmented = "Lookup Table - Augmentable to Schwo-Augmented"
 
+# These are the contexts where two glyphs may be substituted for a single one.
+# This either means gemination or diacritic (schwa/schwo) substitution.
+# For instance, medial T and medial T get substituted by geminate T,
+# or initial T and final Schwa get substituted by isolated T.schwa.
+# The exact substitution is listed sanapatacode_generation_schwasubstitution.substitutions.
 
-geminationSubstitutionContexts = [
+substitutionContexts = [
   "@Initials @Isolates",
   "@Initials @Initials",
   "@Medials @Isolates",
@@ -147,6 +168,8 @@ geminationSubstitutionContexts = [
 ### main method ###
 
 def run():
+
+  print("Generating Sanapata Font Creator code to " + filename + ".")
 
   with open(filename, mode) as writer:
     writer.write("script latn {\n\tfeature ContextualAlternates1;\n}\n\n")
@@ -172,6 +195,8 @@ def run():
     writeSubstitutionRule(writer, finalToMedial)
     writeSubstitutionRule(writer, initToMedial)
     writeSubstitutionRule(writer, doubleToGeminate)
+    writeSubstitutionRule(writer, augmentableToSchwaAugmented)
+    writeSubstitutionRule(writer, augmentableToSchwoAugmented)
     writeSubstitutionRule(writer, connectingToNonconnecting)
 
    ### these are still a mess ###
@@ -189,8 +214,10 @@ def run():
 
     writePositionalSubstitutions(writer)
     writeGeminationSubstitutions(writer)
+    writeSchwaSubstitutions(writer)
+    writeSchwoSubstitutions(writer)
     
-    
+    # break out into method
 
     writer.write("lookup \"" + connectingToNonconnecting + "\" {\n")
     writer.write("\tcontext (@Nonconnecting) @Medials;\n")
@@ -264,8 +291,16 @@ def writeDiacriticSubstitutions(writer, subName, subTableName, contexts):
   writer.write("}\n\n")
 
 def writeGeminationSubstitutions(writer):
-  writeDiacriticSubstitutions(writer, doubleToGeminate, tableDoubleToGeminate, geminationSubstitutionContexts)
+  writeDiacriticSubstitutions(writer, doubleToGeminate, tableDoubleToGeminate, substitutionContexts)
   createGeminationSubstitutions(writer, tableDoubleToGeminate, consonants.split())
+
+def writeSchwaSubstitutions(writer):
+	writeDiacriticSubstitutions(writer, augmentableToSchwaAugmented, tableAugmentableToSchwaAugmented, substitutionContexts)
+	createSchwaOrSchwoSubstitutions(writer, tableAugmentableToSchwaAugmented, augmentables, useSchwa = True)
+
+def writeSchwoSubstitutions(writer):
+	writeDiacriticSubstitutions(writer, augmentableToSchwoAugmented, tableAugmentableToSchwoAugmented, substitutionContexts)
+	createSchwaOrSchwoSubstitutions(writer, tableAugmentableToSchwoAugmented, augmentables, useSchwa = False)
 
 def writePositionalSubstitutions(writer):
   writeLookupTableName(writer, inputToIsol)

@@ -1,3 +1,5 @@
+# pattern: if [first] meets [second], substitute [third]
+
 substitutions = [
 	("init","fin", "isol"),
 	("init", "isol", "isol"),
@@ -8,20 +10,6 @@ substitutions = [
 	("med", "fin", "fin"),
 	("med", "init", "med"),
 	("med", "isol", "fin")
-]
-
-geminations = [
-
-	("init", "isol", "isol"),
-	("init", "init", "init"),
-	("init", "med", "init"),
-	("init", "fin", "isol"),
-
-	("med", "isol", "fin"),
-	("med", "init", "med"),
-	("med", "med", "med"),
-	("med", "fin", "fin")
-
 ]
 
 #deprecated, use ligatures
@@ -61,10 +49,10 @@ def createGeminationSubstitutions(writer, description, consonants):
 			writer.write("\t" + string + ";\n")
 	writer.write("}\n")
 
-def createSchwaOrSchwoSubstitutions(writer, description, useSchwa = True):
+def createSchwaOrSchwoSubstitutions(writer, description, consonants, useSchwa = True):
 	diacritic = "schwa" if useSchwa else "schwo"
 	writer.write("lookup \"" + description + "\" {\n")
-	for glyph in augmentables:
+	for glyph in consonants:
 		for (firstQualifier, schwaQualifier, substitutionQualifier) in substitutions:
 			simpleString = "sub " + glyph + "." + firstQualifier + " " + diacritic + "." + schwaQualifier + " -> " + glyph + "." + substitutionQualifier + "." + diacritic 
 			geminatedString = "sub " + glyph + "." + firstQualifier + ".gem " + diacritic + "." + schwaQualifier + " -> " + glyph + "." + substitutionQualifier + ".gem." +  diacritic
