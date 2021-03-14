@@ -2,9 +2,6 @@
 
 # TODOS:
 
-# - substitute schwa-augmented letter if schwa follows augmentable
-# - substitute schwo-augmented letter if schwo follows augmentable
-
 # - substitute schwa-augmented letter if long vowel follows augmentable
 
 # - substitute isolated letter for medial if ō is initial
@@ -76,18 +73,18 @@ augmentables = [
   "n", "sh", "tsh",
   "t", "j",
   "m", "f", "dh",
-  "d", "gh",
   "b", "w",
-  "g", "ng", "ch",
   "v", "z", "dz",
-  "l", "lj",
-  "r", "h"
+  "l", "lj"
 ]
 
 nonaugmentables = [
   "s", "rh", "th", "ts",
   "p", "zh", "dzh",
-  "c", "q"
+  "d", "gh",
+  "g", "ng", "ch",
+  "c", "q",
+  "r", "h"
 ]
 
 nonconnectings = [
